@@ -583,6 +583,62 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   }
 }
 
+  
+/* 記帳明細上方統計 */
+.record-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 12px;
+  margin: 14px 0 12px;
+}
+
+.record-summary-card {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 253, 247, .86);
+  box-shadow: 0 10px 24px rgba(104, 91, 62, .08);
+}
+
+.record-summary-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.record-summary-card strong {
+  color: var(--green);
+  font-size: 22px;
+}
+
+.record-summary-card.highlight {
+  background: linear-gradient(180deg, rgba(216, 189, 122, .23), rgba(255, 253, 247, .88));
+  border-color: rgba(185, 147, 77, .36);
+}
+
+.record-summary-card.highlight strong {
+  color: var(--gold-2);
+}
+
+@media (max-width: 1100px) {
+  .record-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .record-summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+  
+/* 負責人不指定顯示 */
+#ownerInput option[value=""] {
+  color: var(--muted);
+}
+
   </style>
 </head>
 <body>
@@ -697,6 +753,28 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
                 <option value="paymentStatus">依付款狀態分組</option>
               </select>
               <button id="printBtn" class="soft-btn">列印</button>
+            </div>
+          </div>
+          <div class="record-summary-cards">
+            <div class="record-summary-card">
+              <span>目前篩選總金額</span>
+              <strong id="recordSumRevenue">$0</strong>
+            </div>
+            <div class="record-summary-card">
+              <span>給老師 / 成本</span>
+              <strong id="recordSumCost">$0</strong>
+            </div>
+            <div class="record-summary-card highlight">
+              <span>目前篩選淨收</span>
+              <strong id="recordSumProfit">$0</strong>
+            </div>
+            <div class="record-summary-card">
+              <span>未收款</span>
+              <strong id="recordSumUnpaid">$0</strong>
+            </div>
+            <div class="record-summary-card">
+              <span>筆數</span>
+              <strong id="recordSumCount">0</strong>
             </div>
           </div>
           <p class="muted group-hint">預設會把同一分類放在一起，並顯示小計，資料變多也比較不亂。</p>
@@ -930,7 +1008,7 @@ const categories = [
 
 
 const defaultPaymentMethods = ["轉帳", "LINE Pay", "現金", "尚未付款", "其他"];
-const defaultOwners = ["未指定", "Alisha", "席琳老師", "合作老師", "其他"];
+const defaultOwners = ["Alisha", "席琳老師", "合作老師", "其他"];
 
 
 const defaultColumns = [
@@ -1272,8 +1350,8 @@ function renderPaymentAndOwnerSelects() {
   const ownerSelect = $("ownerInput");
   if (ownerSelect) {
     const current = ownerSelect.value;
-    ownerSelect.innerHTML = owners.map((owner) => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join("");
-    ownerSelect.value = owners.includes(current) ? current : owners[0] || "";
+    ownerSelect.innerHTML = `<option value="">不指定</option>` + owners.map((owner) => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join("");
+    ownerSelect.value = current && owners.includes(current) ? current : "";
   }
 }
 
@@ -1378,6 +1456,8 @@ function renderAllTimeSummary(all) {
 
 function renderRecords() {
   const list = filteredRecords();
+  renderRecordSummary(list);
+
   const displayColumns = visibleColumns();
   const colspan = displayColumns.length + 1;
   const groupMode = $("groupModeFilter")?.value || "category";
@@ -1416,6 +1496,15 @@ function renderRecords() {
     </tr>
     ${group.records.map((record) => recordRowHtml(record, displayColumns)).join("")}
   `).join("");
+}
+
+function renderRecordSummary(list) {
+  const summary = summaryOf(list);
+  if ($("recordSumRevenue")) $("recordSumRevenue").textContent = money(summary.revenue);
+  if ($("recordSumCost")) $("recordSumCost").textContent = money(summary.cost);
+  if ($("recordSumProfit")) $("recordSumProfit").textContent = money(summary.profit);
+  if ($("recordSumUnpaid")) $("recordSumUnpaid").textContent = money(summary.unpaid);
+  if ($("recordSumCount")) $("recordSumCount").textContent = String(summary.count);
 }
 
 function recordRowHtml(record, displayColumns) {
@@ -1476,7 +1565,7 @@ function recordCell(record, fieldId) {
     case "customer":
       return { html: escapeHtml(record.customer || ""), className: "" };
     case "owner":
-      return { html: escapeHtml(record.owner || ""), className: "" };
+      return { html: record.owner ? escapeHtml(record.owner) : `<span class="muted">不指定</span>`, className: "" };
     case "paymentStatus":
       return { html: statusBadge(record.paymentStatus), className: "" };
     case "paymentMethod":
@@ -1722,7 +1811,7 @@ function openRecordDialog(id = "") {
   $("categoryInput").value = record?.category || "塔羅";
   $("itemInput").value = record?.item || "";
   $("customerInput").value = record?.customer || "";
-  $("ownerInput").value = owners.includes(record?.owner) ? record.owner : (record?.owner || owners[0] || "");
+  $("ownerInput").value = record ? (owners.includes(record?.owner) ? record.owner : (record?.owner || "")) : "";
   $("paymentStatusInput").value = record?.paymentStatus || "已收款";
   $("paymentMethodInput").value = record?.paymentMethod || "轉帳";
   $("paidDateInput").value = record?.paidDate || (record?.paymentStatus === "已收款" ? record?.date : todayISO());
