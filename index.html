@@ -788,6 +788,89 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   font-weight: 700;
 }
 
+  
+/* 新增 / 編輯表單同步欄位設定 */
+.form-grid [data-form-field].hidden {
+  display: none !important;
+}
+
+  
+/* 欄位設定同步所有表單與預覽 */
+.modal-total [data-summary-field].hidden {
+  display: none !important;
+}
+
+  
+/* 資料庫同步設定 */
+.db-status-card {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 253, 247, .86);
+  margin-bottom: 14px;
+}
+
+.db-status-card strong {
+  color: var(--green);
+}
+
+.db-status-card small {
+  color: var(--muted);
+}
+
+.db-form-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr .8fr;
+  gap: 12px;
+}
+
+.db-form-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.db-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.db-help {
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.62);
+}
+
+.db-help summary {
+  cursor: pointer;
+  color: var(--gold-2);
+  font-weight: 800;
+}
+
+.db-help pre {
+  overflow: auto;
+  white-space: pre-wrap;
+  background: #fffdf7;
+  border: 1px solid rgba(185,147,77,.22);
+  border-radius: 12px;
+  padding: 12px;
+  color: #2f2c24;
+  font-size: 13px;
+}
+
+@media (max-width: 920px) {
+  .db-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -820,7 +903,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       <header class="topbar">
         <div>
           <h2 id="pageTitle">儀表板</h2>
-          <p id="todayText"></p><p class="version-badge">欄位真的刪除版 v110</p>
+          <p id="todayText"></p><p class="version-badge">資料庫同步版 v113</p>
         </div>
         <div class="top-actions">
           <select id="yearFilter" aria-label="選擇年份"></select>
@@ -1027,8 +1110,77 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
         <div class="panel top-gap settings-collapse-card">
           <div class="settings-collapse-head">
             <div>
+              <h3>資料庫同步</h3>
+              <p class="muted">連接 Supabase 後，手機、電腦與朋友開同一個網址都會同步同一份資料。</p>
+            </div>
+            <button id="toggleDatabaseSettingsBtn" type="button" class="soft-btn settings-toggle-btn" aria-expanded="false">
+              <span class="settings-toggle-text">展開</span>
+              <span class="settings-toggle-icon">▸</span>
+            </button>
+          </div>
+          <div id="databaseSettingsBody" class="settings-collapse-body hidden">
+            <div class="db-status-card">
+              <strong id="dbStatusText">目前尚未連接資料庫</strong>
+              <small id="dbSyncTimeText">資料目前只存在這台裝置的瀏覽器裡。</small>
+            </div>
+
+            <div class="db-form-grid">
+              <label>
+                Supabase URL
+                <input id="supabaseUrlInput" placeholder="https://xxxx.supabase.co" />
+              </label>
+              <label>
+                Supabase anon key
+                <input id="supabaseKeyInput" placeholder="貼上 anon public key" />
+              </label>
+              <label>
+                同步空間 ID
+                <input id="syncSpaceInput" placeholder="例如：soul-nest-main" />
+              </label>
+            </div>
+
+            <div class="db-actions">
+              <button id="saveDatabaseBtn" type="button" class="primary-btn">儲存連線設定</button>
+              <button id="pullDatabaseBtn" type="button" class="soft-btn">從資料庫讀取</button>
+              <button id="pushDatabaseBtn" type="button" class="soft-btn">上傳目前資料</button>
+            </div>
+
+            <details class="db-help">
+              <summary>第一次設定 Supabase 要建立這張資料表</summary>
+              <p class="muted">到 Supabase → SQL Editor，貼上以下 SQL 後按 Run。</p>
+              <pre><code>create table if not exists public.soul_nest_data (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz default now()
+);
+
+alter table public.soul_nest_data enable row level security;
+
+create policy "soul_nest_read"
+on public.soul_nest_data
+for select
+using (true);
+
+create policy "soul_nest_insert"
+on public.soul_nest_data
+for insert
+with check (true);
+
+create policy "soul_nest_update"
+on public.soul_nest_data
+for update
+using (true)
+with check (true);</code></pre>
+              <p class="muted">提醒：這是共用資料庫模式。任何拿到網址與連線設定的人都能看與改同一份資料。</p>
+            </details>
+          </div>
+        </div>
+
+        <div class="panel top-gap settings-collapse-card">
+          <div class="settings-collapse-head">
+            <div>
               <h3>欄位設定</h3>
-              <p class="muted">需要時再展開，不用一直往下拉很久。</p>
+              <p class="muted">需要時再展開；欄位顯示、刪除與改名會同步到記帳明細、新增/編輯記帳、匯出 CSV。</p>
             </div>
             <button id="toggleColumnsSettingsBtn" type="button" class="soft-btn settings-toggle-btn" aria-expanded="false">
               <span class="settings-toggle-text">展開</span>
@@ -1064,24 +1216,24 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       </div>
       <input id="recordId" type="hidden" />
       <div class="form-grid">
-        <label>日期<input id="dateInput" type="date" required /></label>
-        <label>分類<select id="categoryInput" required></select></label>
-        <label class="wide">品項<input id="itemInput" list="itemOptions" placeholder="輸入或選擇品項" required /></label>
+        <label data-form-field="date">日期<input id="dateInput" type="date" required /></label>
+        <label data-form-field="category">分類<select id="categoryInput" required></select></label>
+        <label class="wide" data-form-field="item">品項<input id="itemInput" list="itemOptions" placeholder="輸入或選擇品項" required /></label>
         <datalist id="itemOptions"></datalist>
-        <label>客人 / 來源<input id="customerInput" placeholder="例如：客人暱稱、IG、LINE" /></label>
-        <label>負責人<select id="ownerInput"></select></label>
-        <label>付款狀態<select id="paymentStatusInput"><option>已收款</option><option>未收款</option></select></label>
-        <label>付款方式<select id="paymentMethodInput"></select></label>
-        <label>付款日期<input id="paidDateInput" type="date" /></label>
-        <label>客人收費 / 件<input id="priceInput" type="number" min="0" step="1" required /></label>
-        <label>數量<input id="qtyInput" type="number" min="1" step="1" value="1" required /></label>
-        <label>給老師 / 成本總額<input id="costInput" type="number" min="0" step="1" value="0" /></label>
-        <label class="wide">備註<textarea id="noteInput" rows="3" placeholder="例如：加急、老師分潤、客製儀式材料等"></textarea></label>
+        <label data-form-field="customer">客人 / 來源<input id="customerInput" placeholder="例如：客人暱稱、IG、LINE" /></label>
+        <label data-form-field="owner">負責人<select id="ownerInput"></select></label>
+        <label data-form-field="paymentStatus">付款狀態<select id="paymentStatusInput"><option>已收款</option><option>未收款</option></select></label>
+        <label data-form-field="paymentMethod">付款方式<select id="paymentMethodInput"></select></label>
+        <label data-form-field="paidDate">付款日期<input id="paidDateInput" type="date" /></label>
+        <label data-form-field="price">客人收費 / 件<input id="priceInput" type="number" min="0" step="1" required /></label>
+        <label data-form-field="qty">數量<input id="qtyInput" type="number" min="1" step="1" value="1" required /></label>
+        <label data-form-field="cost">給老師 / 成本總額<input id="costInput" type="number" min="0" step="1" value="0" /></label>
+        <label class="wide" data-form-field="note">備註<textarea id="noteInput" rows="3" placeholder="例如：加急、老師分潤、客製儀式材料等"></textarea></label>
         <div id="customFieldInputs" class="custom-fields wide"></div>
       </div>
       <div class="modal-total">
-        <span>總金額：<strong id="previewAmount">$0</strong></span>
-        <span>預估我們淨收：<strong id="previewProfit">$0</strong></span>
+        <span data-summary-field="amount">總金額：<strong id="previewAmount">$0</strong></span>
+        <span data-summary-field="profit">預估我們淨收：<strong id="previewProfit">$0</strong></span>
       </div>
       <div class="modal-actions">
         <button type="button" id="deleteRecordBtn" class="danger-btn hidden">刪除</button>
@@ -1099,15 +1251,17 @@ const COLUMN_KEY = "soulNestColumnsV1";
 const SETTINGS_PANEL_KEY = "soulNestSettingsPanelsV1";
 const PAYMENT_METHOD_KEY = "soulNestPaymentMethodsV1";
 const OWNER_KEY = "soulNestOwnersV1";
+const DB_SETTING_KEY = "soulNestDatabaseSettingsV1";
 
 function loadSettingsPanels() {
   try {
     const raw = localStorage.getItem(SETTINGS_PANEL_KEY);
-    if (!raw) return { items: true, options: false, columns: false };
+    if (!raw) return { items: true, options: false, database: false, columns: false };
     const parsed = JSON.parse(raw);
     return {
       items: typeof parsed.items === "boolean" ? parsed.items : true,
       options: typeof parsed.options === "boolean" ? parsed.options : false,
+      database: typeof parsed.database === "boolean" ? parsed.database : false,
       columns: typeof parsed.columns === "boolean" ? parsed.columns : false
     };
   } catch (error) {
@@ -1125,6 +1279,7 @@ function applySettingsPanels() {
   const mapping = [
     { key: "items", button: $("toggleItemsSettingsBtn"), body: $("itemsSettingsBody") },
     { key: "options", button: $("toggleOptionsSettingsBtn"), body: $("optionsSettingsBody") },
+    { key: "database", button: $("toggleDatabaseSettingsBtn"), body: $("databaseSettingsBody") },
     { key: "columns", button: $("toggleColumnsSettingsBtn"), body: $("columnsSettingsBody") }
   ];
 
@@ -1178,7 +1333,7 @@ const defaultColumns = [
   { id: "paymentStatus", label: "付款狀態", visible: true },
   { id: "paymentMethod", label: "付款方式", visible: true },
   { id: "paidDate", label: "付款日期", visible: false },
-  { id: "price", label: "單價", visible: true },
+  { id: "price", label: "客人收費 / 件", visible: true },
   { id: "qty", label: "數量", visible: true },
   { id: "amount", label: "總金額", visible: true },
   { id: "cost", label: "給老師 / 成本", visible: true },
@@ -1235,10 +1390,38 @@ let items = loadWithMigration(ITEM_KEY, OLD_ITEM_KEY, defaultItems);
 let columns = loadColumns();
 let paymentMethods = loadStringList(PAYMENT_METHOD_KEY, defaultPaymentMethods);
 let owners = loadStringList(OWNER_KEY, defaultOwners);
+let databaseSettings = loadDatabaseSettings();
+let cloudSyncTimer = null;
+let isApplyingCloudData = false;
 let activePage = "dashboard";
 let activeRecordType = "income";
 
 const $ = (id) => document.getElementById(id);
+
+function loadDatabaseSettings() {
+  try {
+    const raw = localStorage.getItem(DB_SETTING_KEY);
+    if (!raw) return { url: "", key: "", space: "soul-nest-main", enabled: false, lastSyncedAt: "" };
+    const parsed = JSON.parse(raw);
+    return {
+      url: String(parsed.url || ""),
+      key: String(parsed.key || ""),
+      space: String(parsed.space || "soul-nest-main"),
+      enabled: parsed.enabled === true,
+      lastSyncedAt: String(parsed.lastSyncedAt || "")
+    };
+  } catch (error) {
+    return { url: "", key: "", space: "soul-nest-main", enabled: false, lastSyncedAt: "" };
+  }
+}
+
+function saveDatabaseSettingsLocal() {
+  localStorage.setItem(DB_SETTING_KEY, JSON.stringify(databaseSettings));
+}
+
+function databaseReady() {
+  return databaseSettings.enabled && databaseSettings.url && databaseSettings.key && databaseSettings.space;
+}
 
 function loadWithMigration(newKey, oldKey, fallback) {
   try {
@@ -1336,13 +1519,136 @@ function normalizeColumns(input) {
 }
 
 function customColumns() {
-  return columns.filter((column) => String(column.id).startsWith("custom_"));
+  return columns.filter((column) => String(column.id).startsWith("custom_") && column.visible && !column.deleted);
 }
 
 function normalizeColumnLabel(id, label) {
+  if (id === "price" && label === "單價") return "客人收費 / 件";
   if (id === "cost" && label === "成本") return "給老師 / 成本";
   if (id === "profit" && label === "淨利") return "我們淨收";
   return label;
+}
+
+function serializeState() {
+  return {
+    records,
+    items,
+    columns,
+    paymentMethods,
+    owners
+  };
+}
+
+function applyState(data) {
+  if (!data || typeof data !== "object") return;
+  if (Array.isArray(data.records)) records = data.records;
+  if (Array.isArray(data.items)) items = data.items;
+  if (Array.isArray(data.columns)) columns = normalizeColumns(data.columns);
+  if (Array.isArray(data.paymentMethods)) paymentMethods = loadStringListFromArray(data.paymentMethods, defaultPaymentMethods);
+  if (Array.isArray(data.owners)) owners = loadStringListFromArray(data.owners, defaultOwners);
+}
+
+function supabaseEndpoint() {
+  return `${databaseSettings.url.replace(/\/$/, "")}/rest/v1/soul_nest_data`;
+}
+
+function supabaseHeaders(extra = {}) {
+  return {
+    apikey: databaseSettings.key,
+    Authorization: `Bearer ${databaseSettings.key}`,
+    "Content-Type": "application/json",
+    ...extra
+  };
+}
+
+function scheduleCloudSync() {
+  if (!databaseReady() || isApplyingCloudData) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => pushCloudData(true), 900);
+}
+
+async function pullCloudData(showAlert = true) {
+  if (!databaseReady()) {
+    if (showAlert) alert("請先填寫並儲存 Supabase URL、anon key 與同步空間 ID。");
+    return;
+  }
+
+  setDbStatus("同步中：正在讀取資料庫…");
+  try {
+    const url = `${supabaseEndpoint()}?id=eq.${encodeURIComponent(databaseSettings.space)}&select=data,updated_at`;
+    const response = await fetch(url, { headers: supabaseHeaders() });
+    if (!response.ok) throw new Error(await response.text());
+
+    const rows = await response.json();
+    if (!rows.length) {
+      await pushCloudData(false);
+      if (showAlert) alert("資料庫目前是空的，已把目前這台裝置的資料上傳。");
+      return;
+    }
+
+    isApplyingCloudData = true;
+    applyState(rows[0].data);
+    databaseSettings.lastSyncedAt = rows[0].updated_at || new Date().toISOString();
+    saveDatabaseSettingsLocal();
+    save();
+    isApplyingCloudData = false;
+    render();
+
+    setDbStatus("已連接資料庫", databaseSettings.lastSyncedAt);
+    if (showAlert) alert("已從資料庫讀取最新資料。");
+  } catch (error) {
+    isApplyingCloudData = false;
+    console.error(error);
+    setDbStatus("資料庫讀取失敗，請檢查設定或 SQL 權限。");
+    if (showAlert) alert("資料庫讀取失敗，請確認 Supabase 設定與 SQL 權限。");
+  }
+}
+
+async function pushCloudData(silent = false) {
+  if (!databaseReady()) return;
+
+  setDbStatus("同步中：正在上傳資料…");
+  try {
+    const payload = [{
+      id: databaseSettings.space,
+      data: serializeState(),
+      updated_at: new Date().toISOString()
+    }];
+
+    const response = await fetch(`${supabaseEndpoint()}?on_conflict=id`, {
+      method: "POST",
+      headers: supabaseHeaders({ Prefer: "resolution=merge-duplicates,return=representation" }),
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error(await response.text());
+
+    const rows = await response.json();
+    databaseSettings.lastSyncedAt = rows?.[0]?.updated_at || new Date().toISOString();
+    saveDatabaseSettingsLocal();
+    renderDatabaseSettings();
+    setDbStatus("已連接資料庫", databaseSettings.lastSyncedAt);
+    if (!silent) alert("已上傳目前資料到資料庫。");
+  } catch (error) {
+    console.error(error);
+    setDbStatus("資料庫上傳失敗，請檢查設定或 SQL 權限。");
+    if (!silent) alert("資料庫上傳失敗，請確認 Supabase 設定與 SQL 權限。");
+  }
+}
+
+function setDbStatus(text, isoTime = "") {
+  const status = $("dbStatusText");
+  const time = $("dbSyncTimeText");
+  if (status) status.textContent = text;
+  if (time) {
+    if (isoTime) {
+      time.textContent = `最後同步：${new Date(isoTime).toLocaleString("zh-TW")}`;
+    } else if (databaseSettings.lastSyncedAt) {
+      time.textContent = `最後同步：${new Date(databaseSettings.lastSyncedAt).toLocaleString("zh-TW")}`;
+    } else {
+      time.textContent = databaseReady() ? "已設定資料庫，尚未同步。" : "資料目前只存在這台裝置的瀏覽器裡。";
+    }
+  }
 }
 
 function save() {
@@ -1351,6 +1657,7 @@ function save() {
   localStorage.setItem(COLUMN_KEY, JSON.stringify(columns));
   localStorage.setItem(PAYMENT_METHOD_KEY, JSON.stringify(paymentMethods));
   localStorage.setItem(OWNER_KEY, JSON.stringify(owners));
+  scheduleCloudSync();
 }
 
 function money(value) {
@@ -1467,6 +1774,7 @@ function render() {
   renderCategoryOptions();
   renderDatalist();
   renderOptionSettings();
+  renderDatabaseSettings();
   renderDashboard();
   renderRecords();
   renderMonthly();
@@ -1964,6 +2272,26 @@ function deleteOption(type, index) {
   render();
 }
 
+function renderDatabaseSettings() {
+  if ($("supabaseUrlInput")) $("supabaseUrlInput").value = databaseSettings.url || "";
+  if ($("supabaseKeyInput")) $("supabaseKeyInput").value = databaseSettings.key || "";
+  if ($("syncSpaceInput")) $("syncSpaceInput").value = databaseSettings.space || "soul-nest-main";
+  setDbStatus(databaseReady() ? "已連接資料庫" : "目前尚未連接資料庫", databaseSettings.lastSyncedAt);
+}
+
+function saveDatabaseSettingsFromForm() {
+  databaseSettings = {
+    url: $("supabaseUrlInput").value.trim(),
+    key: $("supabaseKeyInput").value.trim(),
+    space: $("syncSpaceInput").value.trim() || "soul-nest-main",
+    enabled: true,
+    lastSyncedAt: databaseSettings.lastSyncedAt || ""
+  };
+  saveDatabaseSettingsLocal();
+  renderDatabaseSettings();
+  pullCloudData(true);
+}
+
 function renderColumnSettings() {
   const list = $("columnSettingsList");
   if (!list) return;
@@ -2026,6 +2354,7 @@ function openRecordDialog(id = "") {
   $("noteInput").placeholder = "例如：加急、老師分潤、客製儀式材料等";
   $("noteInput").value = record?.note || "";
   renderCustomFieldInputs(record);
+  applyRecordFormColumnVisibility();
   $("deleteRecordBtn").classList.toggle("hidden", !record);
   updatePreview();
   $("recordDialog").showModal();
@@ -2058,6 +2387,64 @@ function collectCustomFields() {
     result[input.dataset.columnId] = input.value.trim();
   });
   return result;
+}
+
+function columnById(fieldId) {
+  return columns.find((item) => item.id === fieldId);
+}
+
+function isColumnEnabled(fieldId) {
+  const column = columnById(fieldId);
+  if (!column) return true;
+  return column.visible && !column.deleted;
+}
+
+function syncRecordFormLabels() {
+  document.querySelectorAll("[data-form-field]").forEach((label) => {
+    const fieldId = label.dataset.formField;
+    const column = columnById(fieldId);
+    if (!column) return;
+
+    const firstTextNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+    if (firstTextNode) {
+      firstTextNode.textContent = column.label;
+    }
+  });
+
+  const amountColumn = columnById("amount");
+  const profitColumn = columnById("profit");
+  const amountText = document.querySelector('[data-summary-field="amount"]');
+  const profitText = document.querySelector('[data-summary-field="profit"]');
+
+  if (amountText && amountColumn) {
+    const strong = amountText.querySelector("strong");
+    amountText.firstChild.textContent = `${amountColumn.label}：`;
+    if (strong && !amountText.contains(strong)) amountText.appendChild(strong);
+  }
+
+  if (profitText && profitColumn) {
+    const strong = profitText.querySelector("strong");
+    profitText.firstChild.textContent = `預估${profitColumn.label}：`;
+    if (strong && !profitText.contains(strong)) profitText.appendChild(strong);
+  }
+}
+
+function applyRecordFormColumnVisibility() {
+  syncRecordFormLabels();
+
+  document.querySelectorAll("[data-form-field]").forEach((label) => {
+    const fieldId = label.dataset.formField;
+    const enabled = isColumnEnabled(fieldId);
+    label.classList.toggle("hidden", !enabled);
+    label.querySelectorAll("input, select, textarea").forEach((input) => {
+      input.disabled = !enabled;
+    });
+  });
+
+  document.querySelectorAll("[data-summary-field]").forEach((item) => {
+    const fieldId = item.dataset.summaryField;
+    item.classList.toggle("hidden", !isColumnEnabled(fieldId));
+  });
 }
 
 function openExpenseDialog() {
@@ -2133,18 +2520,18 @@ function submitRecord(event) {
   const id = $("recordId").value || uuid();
   const next = {
     id,
-    date: $("dateInput").value,
-    category: $("categoryInput").value,
-    item: $("itemInput").value.trim(),
-    customer: $("customerInput").value.trim(),
-    owner: $("ownerInput").value,
-    paymentStatus: $("paymentStatusInput").value,
-    paymentMethod: $("paymentMethodInput").value,
-    paidDate: $("paidDateInput").value,
-    price: Number($("priceInput").value || 0),
-    qty: Number($("qtyInput").value || 1),
-    cost: Number($("costInput").value || 0),
-    note: $("noteInput").value.trim(),
+    date: $("dateInput")?.value || todayISO(),
+    category: $("categoryInput")?.value || "其他收入",
+    item: $("itemInput")?.value.trim() || "",
+    customer: $("customerInput")?.value.trim() || "",
+    owner: $("ownerInput")?.value || "",
+    paymentStatus: $("paymentStatusInput")?.value || "已收款",
+    paymentMethod: $("paymentMethodInput")?.value || "",
+    paidDate: $("paidDateInput")?.value || "",
+    price: Number($("priceInput")?.value || 0),
+    qty: Number($("qtyInput")?.value || 1),
+    cost: Number($("costInput")?.value || 0),
+    note: $("noteInput")?.value.trim() || "",
     customFields: collectCustomFields()
   };
 
@@ -2238,6 +2625,7 @@ function deleteColumn(id) {
 
   columns = columns.map((item) => item.id === id ? { ...item, visible: false, deleted: true } : item);
   render();
+  applyRecordFormColumnVisibility();
 }
 
 function deleteCustomColumn(id) {
@@ -2252,6 +2640,7 @@ function deleteCustomColumn(id) {
     return { ...record, customFields };
   });
   render();
+  applyRecordFormColumnVisibility();
 }
 
 function toggleColumnVisibility(id, checked) {
@@ -2262,12 +2651,14 @@ function toggleColumnVisibility(id, checked) {
   }
   columns = columns.map((column) => column.id === id ? { ...column, visible: checked } : column);
   save();
+  applyRecordFormColumnVisibility();
   renderRecords();
 }
 
 function renameColumn(id, label) {
   columns = columns.map((column) => column.id === id ? { ...column, label: label.trim() || defaultColumns.find((base) => base.id === id)?.label || column.label } : column);
   save();
+  applyRecordFormColumnVisibility();
   renderRecords();
 }
 
@@ -2388,9 +2779,13 @@ function init() {
   applySettingsPanels();
   $("toggleItemsSettingsBtn").addEventListener("click", () => toggleSettingsPanel("items"));
   $("toggleOptionsSettingsBtn").addEventListener("click", () => toggleSettingsPanel("options"));
+  $("toggleDatabaseSettingsBtn").addEventListener("click", () => toggleSettingsPanel("database"));
   $("toggleColumnsSettingsBtn").addEventListener("click", () => toggleSettingsPanel("columns"));
   $("itemForm").addEventListener("submit", addItem);
   $("customColumnForm").addEventListener("submit", addCustomColumn);
+  $("saveDatabaseBtn").addEventListener("click", saveDatabaseSettingsFromForm);
+  $("pullDatabaseBtn").addEventListener("click", () => pullCloudData(true));
+  $("pushDatabaseBtn").addEventListener("click", () => pushCloudData(false));
   $("paymentMethodForm").addEventListener("submit", (event) => {
     event.preventDefault();
     addOption("payment", $("paymentMethodNameInput").value);
