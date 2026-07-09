@@ -871,6 +871,401 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   }
 }
 
+  
+/* 手機版畫面優化 v114 */
+@media (max-width: 760px) {
+  body {
+    background: #fbf6ea;
+  }
+
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 8px 22px rgba(104, 91, 62, .08);
+  }
+
+  .brand {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+  }
+
+  .brand h1 {
+    font-size: 20px;
+  }
+
+  .brand p {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .nav-btn {
+    text-align: center;
+    padding: 9px 6px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .backup-box {
+    display: none;
+  }
+
+  main {
+    padding: 14px;
+  }
+
+  .topbar {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .topbar h2 {
+    font-size: 24px;
+  }
+
+  .topbar p {
+    font-size: 13px;
+  }
+
+  .top-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .top-actions select,
+  .top-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .top-actions .primary-btn,
+  .top-actions .expense-btn {
+    grid-column: span 2;
+  }
+
+  .panel {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .panel-head.wrap {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .filters input,
+  .filters select,
+  .filters button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .record-summary-cards,
+  .cards,
+  .category-panel-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .record-summary-card,
+  .card,
+  .category-total-card {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .record-summary-card strong,
+  .card strong,
+  .category-total-card strong {
+    font-size: 20px;
+  }
+
+  .record-type-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-radius: 16px;
+  }
+
+  .record-type-btn {
+    padding: 9px 6px;
+    font-size: 13px;
+  }
+
+  .table-wrap {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  table.records-table {
+    min-width: 0;
+    background: transparent;
+  }
+
+  .records-table thead {
+    display: none;
+  }
+
+  .records-table tbody,
+  .records-table tr,
+  .records-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .records-table tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 253, 247, .92);
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(104, 91, 62, .07);
+  }
+
+  .records-table td {
+    white-space: normal;
+    border-bottom: 1px solid rgba(116, 126, 80, .10);
+    padding: 10px 12px;
+  }
+
+  .records-table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  .records-table .row-actions {
+    display: block;
+    text-align: right;
+    border-bottom: 0;
+  }
+
+  .records-table .row-actions .tiny-btn {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .records-table .group-row {
+    background: rgba(216, 189, 122, .16);
+    box-shadow: none;
+    border-color: rgba(216, 189, 122, .30);
+  }
+
+  .records-table .group-row td {
+    padding: 12px;
+  }
+
+  .records-table .group-row td::before {
+    display: none;
+  }
+
+  .group-row-inner {
+    gap: 8px;
+  }
+
+  .group-row-inner strong {
+    font-size: 15px;
+  }
+
+  .group-row-inner span {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  dialog {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .modal-card {
+    width: calc(100vw - 18px);
+    max-height: calc(100vh - 18px);
+    overflow: auto;
+    margin: 9px auto;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .modal-head h3 {
+    font-size: 22px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .form-grid .wide {
+    grid-column: span 1;
+  }
+
+  .modal-total {
+    align-items: stretch;
+    text-align: right;
+  }
+
+  .modal-actions {
+    gap: 10px;
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .item-add-form,
+  .custom-column-form,
+  .option-add-form,
+  .db-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-collapse-head {
+    align-items: stretch;
+  }
+
+  .settings-toggle-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .item-edit-row,
+  .column-setting-item,
+  .option-item {
+    grid-template-columns: 1fr;
+  }
+
+  .column-buttons,
+  .option-actions,
+  .item-actions {
+    justify-content: stretch;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .column-buttons button,
+  .option-actions button,
+  .item-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  nav {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .record-summary-cards,
+  .cards,
+  .category-panel-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .top-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .top-actions .primary-btn,
+  .top-actions .expense-btn {
+    grid-column: span 1;
+  }
+}
+
+  
+/* 手機 App 底部選單 v115 */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mobile-bottom-nav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid rgba(185, 147, 77, .24);
+    border-radius: 24px;
+    background: rgba(255, 253, 247, .96);
+    box-shadow: 0 12px 34px rgba(104, 91, 62, .20);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-tab-btn {
+    border: 0;
+    border-radius: 18px;
+    padding: 8px 4px;
+    background: transparent;
+    color: var(--muted);
+    display: grid;
+    gap: 3px;
+    place-items: center;
+    min-height: 54px;
+  }
+
+  .mobile-tab-btn span {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .mobile-tab-btn small {
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .mobile-tab-btn.active {
+    color: var(--green);
+    background: linear-gradient(135deg, rgba(143, 160, 109, .20), rgba(216, 189, 122, .22));
+  }
+
+  main {
+    padding-bottom: 98px;
+  }
+
+  .sidebar nav {
+    display: none;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -899,11 +1294,30 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       </div>
     </aside>
 
+    <nav class="mobile-bottom-nav" aria-label="手機底部選單">
+      <button type="button" class="mobile-tab-btn active" data-page="dashboard">
+        <span>⌂</span>
+        <small>儀表板</small>
+      </button>
+      <button type="button" class="mobile-tab-btn" data-page="records">
+        <span>☷</span>
+        <small>明細</small>
+      </button>
+      <button type="button" class="mobile-tab-btn" data-page="monthly">
+        <span>▣</span>
+        <small>月報</small>
+      </button>
+      <button type="button" class="mobile-tab-btn" data-page="settings">
+        <span>⚙</span>
+        <small>設定</small>
+      </button>
+    </nav>
+
     <main>
       <header class="topbar">
         <div>
           <h2 id="pageTitle">儀表板</h2>
-          <p id="todayText"></p><p class="version-badge">資料庫同步版 v113</p>
+          <p id="todayText"></p><p class="version-badge">手機底部選單版 v115</p>
         </div>
         <div class="top-actions">
           <select id="yearFilter" aria-label="選擇年份"></select>
@@ -2023,9 +2437,9 @@ function recordRowHtml(record, displayColumns) {
     <tr>
       ${displayColumns.map((column) => {
         const cell = recordCell(record, column.id);
-        return `<td class="${cell.className}">${cell.html}</td>`;
+        return `<td data-label="${escapeHtml(column.label)}" class="${cell.className}">${cell.html}</td>`;
       }).join("")}
-      <td class="row-actions"><button class="tiny-btn" onclick="openRecordDialog('${record.id}')">編輯</button></td>
+      <td data-label="操作" class="row-actions"><button class="tiny-btn" onclick="openRecordDialog('${record.id}')">編輯</button></td>
     </tr>
   `;
 }
@@ -2330,7 +2744,7 @@ function escapeHtml(text) {
 function openPage(page) {
   activePage = page;
   document.querySelectorAll(".page").forEach((section) => section.classList.toggle("active", section.id === page));
-  document.querySelectorAll(".nav-btn").forEach((button) => button.classList.toggle("active", button.dataset.page === page));
+  document.querySelectorAll(".nav-btn, .mobile-tab-btn").forEach((button) => button.classList.toggle("active", button.dataset.page === page));
   const titleMap = { dashboard: "儀表板", records: "記帳明細", monthly: "月報表", settings: "系統設定" };
   $("pageTitle").textContent = titleMap[page] || "Soul Nest 記帳系統";
 }
@@ -2770,7 +3184,7 @@ function init() {
   openPage("dashboard");
   render();
 
-  document.querySelectorAll(".nav-btn").forEach((button) => button.addEventListener("click", () => openPage(button.dataset.page)));
+  document.querySelectorAll(".nav-btn, .mobile-tab-btn").forEach((button) => button.addEventListener("click", () => openPage(button.dataset.page)));
   $("newExpenseTopBtn").addEventListener("click", () => openExpenseDialog());
   $("newRecordTopBtn").addEventListener("click", () => openRecordDialog());
   $("closeDialogBtn").addEventListener("click", closeRecordDialog);
