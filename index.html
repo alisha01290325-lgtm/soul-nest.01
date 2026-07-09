@@ -740,6 +740,19 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   }
 }
 
+  
+/* 版本標示 */
+.version-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(143, 160, 109, .16);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+
   </style>
 </head>
 <body>
@@ -772,7 +785,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       <header class="topbar">
         <div>
           <h2 id="pageTitle">儀表板</h2>
-          <p id="todayText"></p>
+          <p id="todayText"></p><p class="version-badge">收入支出分開版 v106</p>
         </div>
         <div class="top-actions">
           <select id="yearFilter" aria-label="選擇年份"></select>
