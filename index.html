@@ -820,7 +820,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       <header class="topbar">
         <div>
           <h2 id="pageTitle">儀表板</h2>
-          <p id="todayText"></p><p class="version-badge">欄位刪除明顯版 v109</p>
+          <p id="todayText"></p><p class="version-badge">欄位真的刪除版 v110</p>
         </div>
         <div class="top-actions">
           <select id="yearFilter" aria-label="選擇年份"></select>
@@ -1037,7 +1037,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
           </div>
           <div id="columnsSettingsBody" class="settings-collapse-body hidden">
             <div class="panel-head wrap inner-settings-head">
-              <p class="muted">可控制「記帳明細」要顯示哪些欄位，也可以改欄位名稱與調整順序。匯出 CSV 會依照目前顯示欄位輸出。</p>
+              <p class="muted">可控制「記帳明細」要顯示哪些欄位，也可以改欄位名稱、調整順序或刪除欄位。刪除預設欄位後，可按「恢復預設欄位」找回。匯出 CSV 會依照目前顯示欄位輸出。</p>
               <button id="resetColumnsBtn" class="soft-btn">恢復預設欄位</button>
             </div>
             <form id="customColumnForm" class="inline-form custom-column-form">
@@ -1303,7 +1303,8 @@ function normalizeColumns(input) {
       normalized.push({
         id: base.id,
         label: normalizeColumnLabel(base.id, String(column.label || base.label)),
-        visible: typeof column.visible === "boolean" ? column.visible : base.visible
+        visible: typeof column.visible === "boolean" ? column.visible : base.visible,
+        deleted: column.deleted === true
       });
       return;
     }
@@ -1315,6 +1316,7 @@ function normalizeColumns(input) {
         id: String(column.id),
         label,
         visible: typeof column.visible === "boolean" ? column.visible : true,
+        deleted: column.deleted === true,
         custom: true
       });
     }
@@ -1456,7 +1458,7 @@ function availableYears() {
 }
 
 function visibleColumns() {
-  return columns.filter((column) => column.visible);
+  return columns.filter((column) => column.visible && !column.deleted);
 }
 
 function render() {
@@ -1965,7 +1967,9 @@ function deleteOption(type, index) {
 function renderColumnSettings() {
   const list = $("columnSettingsList");
   if (!list) return;
-  list.innerHTML = columns.map((column, index) => `
+
+  const settingColumns = columns.filter((column) => !column.deleted);
+  list.innerHTML = settingColumns.length ? settingColumns.map((column, index) => `
     <div class="column-setting-item">
       <label class="check-line">
         <input type="checkbox" ${column.visible ? "checked" : ""} onchange="toggleColumnVisibility('${column.id}', this.checked)" />
@@ -1974,11 +1978,11 @@ function renderColumnSettings() {
       <input type="text" value="${escapeHtml(column.label)}" oninput="renameColumn('${column.id}', this.value)" aria-label="${escapeHtml(column.label)} 欄位名稱" />
       <div class="column-buttons">
         <button class="tiny-btn" onclick="moveColumn('${column.id}', -1)" ${index === 0 ? "disabled" : ""}>上移</button>
-        <button class="tiny-btn" onclick="moveColumn('${column.id}', 1)" ${index === columns.length - 1 ? "disabled" : ""}>下移</button>
+        <button class="tiny-btn" onclick="moveColumn('${column.id}', 1)" ${index === settingColumns.length - 1 ? "disabled" : ""}>下移</button>
         <button class="tiny-btn danger-mini column-delete-btn" onclick="deleteColumn('${column.id}')">刪除欄位</button>
       </div>
     </div>
-  `).join("");
+  `).join("") : `<p class="muted">目前沒有欄位。可按「恢復預設欄位」找回。</p>`;
 }
 
 function statusBadge(status) {
@@ -2224,19 +2228,15 @@ function deleteColumn(id) {
     return;
   }
 
-  if (!column.visible) {
-    alert("這個欄位已經隱藏了。");
-    return;
-  }
-
-  if (columns.filter((item) => item.visible).length <= 1) {
+  const remainingVisible = columns.filter((item) => item.visible && !item.deleted && item.id !== id).length;
+  if (remainingVisible < 1) {
     alert("至少要保留一個欄位顯示。");
     return;
   }
 
-  if (!confirm(`確定要刪除「${column.label}」欄位嗎？\n\n系統預設欄位刪除後會先改成隱藏，不會刪除已建立的記帳資料。之後可按「恢復預設欄位」找回來。`)) return;
+  if (!confirm(`確定要刪除「${column.label}」欄位嗎？\n\n刪除後會從欄位設定列表消失，但不會刪除已建立的記帳資料。之後可按「恢復預設欄位」找回來。`)) return;
 
-  columns = columns.map((item) => item.id === id ? { ...item, visible: false } : item);
+  columns = columns.map((item) => item.id === id ? { ...item, visible: false, deleted: true } : item);
   render();
 }
 
@@ -2255,7 +2255,7 @@ function deleteCustomColumn(id) {
 }
 
 function toggleColumnVisibility(id, checked) {
-  if (!checked && columns.filter((column) => column.visible).length <= 1) {
+  if (!checked && columns.filter((column) => column.visible && !column.deleted).length <= 1) {
     alert("至少要保留一個欄位顯示。");
     renderColumnSettings();
     return;
@@ -2272,12 +2272,19 @@ function renameColumn(id, label) {
 }
 
 function moveColumn(id, direction) {
-  const index = columns.findIndex((column) => column.id === id);
-  const nextIndex = index + direction;
-  if (index < 0 || nextIndex < 0 || nextIndex >= columns.length) return;
+  const settingColumns = columns.filter((column) => !column.deleted);
+  const visibleIndex = settingColumns.findIndex((column) => column.id === id);
+  const targetVisibleIndex = visibleIndex + direction;
+  if (visibleIndex < 0 || targetVisibleIndex < 0 || targetVisibleIndex >= settingColumns.length) return;
+
+  const movingId = settingColumns[visibleIndex].id;
+  const targetId = settingColumns[targetVisibleIndex].id;
+  const movingIndex = columns.findIndex((column) => column.id === movingId);
+  const targetIndex = columns.findIndex((column) => column.id === targetId);
+
   const nextColumns = [...columns];
-  const [moved] = nextColumns.splice(index, 1);
-  nextColumns.splice(nextIndex, 0, moved);
+  const [moved] = nextColumns.splice(movingIndex, 1);
+  nextColumns.splice(targetIndex, 0, moved);
   columns = nextColumns;
   render();
 }
