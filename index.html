@@ -688,6 +688,58 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   }
 }
 
+  
+/* 新增支出按鈕 */
+.expense-btn {
+  border-color: rgba(184, 91, 91, .24);
+  color: #9f4040;
+  background: rgba(184, 91, 91, .08);
+}
+
+.expense-btn:hover {
+  background: rgba(184, 91, 91, .13);
+}
+
+  
+/* 收入 / 支出切換 */
+.record-type-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 253, 247, .82);
+}
+
+.record-type-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.record-type-btn.active {
+  background: linear-gradient(135deg, rgba(143, 160, 109, .22), rgba(216, 189, 122, .22));
+  color: var(--green);
+  box-shadow: 0 4px 12px rgba(104, 91, 62, .08);
+}
+
+@media (max-width: 720px) {
+  .record-type-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-radius: 18px;
+    width: 100%;
+  }
+
+  .record-type-btn {
+    width: 100%;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -727,6 +779,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
           <select id="monthFilter" aria-label="選擇月份">
             <option value="all">全年</option>
           </select>
+          <button id="newExpenseTopBtn" class="soft-btn expense-btn">＋新增支出</button>
           <button id="newRecordTopBtn" class="primary-btn">＋新增記帳</button>
         </div>
       </header>
@@ -787,7 +840,14 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       <section id="records" class="page">
         <div class="panel">
           <div class="panel-head wrap">
-            <h3>記帳明細</h3>
+            <div>
+              <h3>記帳明細</h3>
+              <div class="record-type-tabs" role="group" aria-label="選擇收入或支出明細">
+                <button type="button" class="record-type-btn active" data-record-type="income">收入明細</button>
+                <button type="button" class="record-type-btn" data-record-type="expense">支出明細</button>
+                <button type="button" class="record-type-btn" data-record-type="all">全部</button>
+              </div>
+            </div>
             <div class="filters">
               <input id="searchInput" type="search" placeholder="搜尋品項 / 客人 / 備註" />
               <select id="categoryFilter"></select>
@@ -807,7 +867,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
           </div>
           <div class="record-summary-cards">
             <div class="record-summary-card">
-              <span>目前篩選總金額</span>
+              <span id="recordSumRevenueLabel">目前篩選總金額</span>
               <strong id="recordSumRevenue">$0</strong>
             </div>
             <div class="record-summary-card">
@@ -815,7 +875,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
               <strong id="recordSumCost">$0</strong>
             </div>
             <div class="record-summary-card highlight">
-              <span>目前篩選淨收</span>
+              <span id="recordSumProfitLabel">目前篩選淨收</span>
               <strong id="recordSumProfit">$0</strong>
             </div>
             <div class="record-summary-card">
@@ -827,7 +887,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
               <strong id="recordSumCount">0</strong>
             </div>
           </div>
-          <p class="muted group-hint">預設會把同一分類放在一起，並顯示小計，資料變多也比較不亂。</p>
+          <p class="muted group-hint">預設只顯示收入明細；支出可切到「支出明細」，避免收入與支出混在一起。</p>
           <div class="table-wrap">
             <table class="records-table">
               <thead id="recordTableHead"></thead>
@@ -1128,6 +1188,7 @@ let columns = loadColumns();
 let paymentMethods = loadStringList(PAYMENT_METHOD_KEY, defaultPaymentMethods);
 let owners = loadStringList(OWNER_KEY, defaultOwners);
 let activePage = "dashboard";
+let activeRecordType = "income";
 
 const $ = (id) => document.getElementById(id);
 
@@ -1328,10 +1389,15 @@ function filteredRecords() {
   return periodRecords.filter((record) => {
     const customText = Object.values(record.customFields || {}).join(" ");
     const text = `${record.item} ${record.customer} ${record.owner} ${record.note} ${record.category} ${record.paymentMethod} ${record.paidDate} ${customText}`.toLowerCase();
+    const isExpense = record.category === "成本支出";
+    const matchType =
+      activeRecordType === "all" ||
+      (activeRecordType === "expense" && isExpense) ||
+      (activeRecordType === "income" && !isExpense);
     const matchKeyword = !keyword || text.includes(keyword);
     const matchCategory = category === "all" || record.category === category;
     const matchStatus = status === "all" || record.paymentStatus === status;
-    return matchKeyword && matchCategory && matchStatus;
+    return matchType && matchKeyword && matchCategory && matchStatus;
   }).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 }
 
@@ -1532,6 +1598,7 @@ function renderAllTimeSummary(all) {
 }
 
 function renderRecords() {
+  renderRecordTypeTabs();
   const list = filteredRecords();
   renderRecordSummary(list);
 
@@ -1575,8 +1642,17 @@ function renderRecords() {
   `).join("");
 }
 
+function renderRecordTypeTabs() {
+  document.querySelectorAll(".record-type-btn").forEach((button) => {
+    button.classList.toggle("active", button.dataset.recordType === activeRecordType);
+  });
+}
+
 function renderRecordSummary(list) {
   const summary = summaryOf(list);
+  const typeLabel = activeRecordType === "expense" ? "支出" : activeRecordType === "income" ? "收入" : "全部";
+  if ($("recordSumRevenueLabel")) $("recordSumRevenueLabel").textContent = activeRecordType === "expense" ? "支出收入金額" : `${typeLabel}總金額`;
+  if ($("recordSumProfitLabel")) $("recordSumProfitLabel").textContent = activeRecordType === "expense" ? "支出後影響淨收" : `${typeLabel}淨收`;
   if ($("recordSumRevenue")) $("recordSumRevenue").textContent = money(summary.revenue);
   if ($("recordSumCost")) $("recordSumCost").textContent = money(summary.cost);
   if ($("recordSumProfit")) $("recordSumProfit").textContent = money(summary.profit);
@@ -1895,6 +1971,7 @@ function openRecordDialog(id = "") {
   $("priceInput").value = record?.price ?? 0;
   $("qtyInput").value = record?.qty ?? 1;
   $("costInput").value = record?.cost ?? 0;
+  $("noteInput").placeholder = "例如：加急、老師分潤、客製儀式材料等";
   $("noteInput").value = record?.note || "";
   renderCustomFieldInputs(record);
   $("deleteRecordBtn").classList.toggle("hidden", !record);
@@ -1929,6 +2006,22 @@ function collectCustomFields() {
     result[input.dataset.columnId] = input.value.trim();
   });
   return result;
+}
+
+function openExpenseDialog() {
+  activeRecordType = "expense";
+  openRecordDialog();
+  $("recordModalTitle").textContent = "新增支出";
+  $("categoryInput").value = "成本支出";
+  $("itemInput").value = "成本支出";
+  $("priceInput").value = 0;
+  $("qtyInput").value = 1;
+  $("costInput").value = 0;
+  $("paymentStatusInput").value = "已收款";
+  if (paymentMethods.includes("轉帳")) $("paymentMethodInput").value = "轉帳";
+  $("paidDateInput").value = todayISO();
+  $("noteInput").placeholder = "例如：廣告費、材料費、平台費、匯款手續費、老師費用等";
+  updatePreview();
 }
 
 function closeRecordDialog() {
@@ -2207,6 +2300,7 @@ function init() {
   render();
 
   document.querySelectorAll(".nav-btn").forEach((button) => button.addEventListener("click", () => openPage(button.dataset.page)));
+  $("newExpenseTopBtn").addEventListener("click", () => openExpenseDialog());
   $("newRecordTopBtn").addEventListener("click", () => openRecordDialog());
   $("closeDialogBtn").addEventListener("click", closeRecordDialog);
   $("recordForm").addEventListener("submit", submitRecord);
@@ -2239,6 +2333,12 @@ function init() {
   $("categoryFilter").addEventListener("change", renderRecords);
   $("statusFilter").addEventListener("change", renderRecords);
   $("groupModeFilter").addEventListener("change", renderRecords);
+  document.querySelectorAll(".record-type-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeRecordType = button.dataset.recordType || "income";
+      renderRecords();
+    });
+  });
   ["priceInput", "costInput", "categoryInput"].forEach((id) => $(id).addEventListener("input", updatePreview));
   $("qtyInput").addEventListener("input", () => {
     autoFillCostFromSelectedItem();
@@ -2257,6 +2357,7 @@ function init() {
 }
 
 window.openRecordDialog = openRecordDialog;
+window.openExpenseDialog = openExpenseDialog;
 window.deleteItem = deleteItem;
 window.toggleColumnVisibility = toggleColumnVisibility;
 window.renameColumn = renameColumn;
