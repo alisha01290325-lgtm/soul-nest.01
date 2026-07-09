@@ -639,6 +639,55 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   color: var(--muted);
 }
 
+  
+/* 分類區塊上方總計 */
+.category-panel-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.category-total-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255, 253, 247, .84);
+}
+
+.category-total-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.category-total-card strong {
+  color: var(--green);
+  font-size: 20px;
+}
+
+.category-total-card.highlight {
+  background: linear-gradient(180deg, rgba(216, 189, 122, .23), rgba(255, 253, 247, .88));
+  border-color: rgba(185, 147, 77, .36);
+}
+
+.category-total-card.highlight strong {
+  color: var(--gold-2);
+}
+
+@media (max-width: 900px) {
+  .category-panel-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .category-panel-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -707,6 +756,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
             <div class="panel-head">
               <h3>分類收入 / 我們淨收</h3>
             </div>
+            <div id="categoryPanelSummary" class="category-panel-summary"></div>
             <div id="categorySummary" class="summary-list"></div>
           </div>
           <div class="panel">
@@ -1383,6 +1433,8 @@ function renderDashboard() {
 }
 
 function renderCategorySummary(periodRecords) {
+  renderCategoryPanelSummary(periodRecords);
+
   const byCategory = categories.map((category) => {
     const list = periodRecords.filter((record) => record.category === category);
     return { category, ...summaryOf(list) };
@@ -1401,6 +1453,31 @@ function renderCategorySummary(periodRecords) {
         </div>
       </div>`).join("")
     : `<p class="muted">這個期間還沒有資料。</p>`;
+}
+
+function renderCategoryPanelSummary(periodRecords) {
+  const target = $("categoryPanelSummary");
+  if (!target) return;
+
+  const summary = summaryOf(periodRecords);
+  target.innerHTML = `
+    <div class="category-total-card">
+      <span>本期總金額</span>
+      <strong>${money(summary.revenue)}</strong>
+    </div>
+    <div class="category-total-card">
+      <span>給老師 / 成本</span>
+      <strong>${money(summary.cost)}</strong>
+    </div>
+    <div class="category-total-card highlight">
+      <span>本期我們淨收</span>
+      <strong>${money(summary.profit)}</strong>
+    </div>
+    <div class="category-total-card">
+      <span>未收款</span>
+      <strong>${money(summary.unpaid)}</strong>
+    </div>
+  `;
 }
 
 function renderTrendSummary() {
