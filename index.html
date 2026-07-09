@@ -154,16 +154,16 @@
             <h3>品項設定</h3>
             <button id="resetDemoBtn" class="danger-soft-btn">重置成範例資料</button>
           </div>
-          <p class="muted">這裡可以設定常用服務的分類、客人收費，以及要給老師多少。新增記帳選到品項時會自動帶入。</p>
-          <form id="itemForm" class="inline-form">
-            <input id="itemNameInput" placeholder="品項名稱，例如：塔羅牌一題" required />
+          <p class="muted">這裡可以設定每個服務「收客人多少、給老師多少、我們抽多少」。新增記帳選到品項時會自動帶入。</p>
+          <form id="itemForm" class="item-add-form">
+            <input id="itemNameInput" placeholder="品項名稱，例如：感情儀式、塔羅四題" required />
             <select id="itemCategoryInput" required></select>
             <input id="itemPriceInput" type="number" min="0" placeholder="客人收費 / 件" required />
             <input id="itemCostInput" type="number" min="0" placeholder="給老師 / 件" value="0" required />
-            <button class="primary-btn" type="submit">新增品項</button>
+            <button class="primary-btn" type="submit">＋新增品項</button>
           </form>
-          <p class="muted split-hint">例：感情儀式客人收 $3,000，給老師 $1,500，系統會自動算我們淨收 $1,500。數量大於 1 時，給老師金額會自動乘上數量。</p>
-          <div id="itemList" class="settings-list"></div>
+          <p class="muted split-hint">例：感情儀式客人收 $3,000，給老師 $1,500，系統會自動算我們抽 $1,500。修改後會自動儲存。</p>
+          <div id="itemList" class="item-settings-grid"></div>
         </div>
 
         <div class="panel top-gap">

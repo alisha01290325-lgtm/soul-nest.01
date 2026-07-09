@@ -193,7 +193,7 @@ dialog::backdrop { background: rgba(76, 67, 48, .36); backdrop-filter: blur(4px)
   padding: 12px;
   border: 1px dashed var(--line);
   border-radius: 16px;
-  background: rgba(255,255,255,.04);
+  background: rgba(255,255,255,.70);
 }
 
 .custom-fields-title {
@@ -288,3 +288,185 @@ dialog::backdrop { background: rgba(76, 67, 48, .36); backdrop-filter: blur(4px)
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* 品項設定：美化＋可直接修改 */
+.item-add-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(130px, .9fr) minmax(130px, .75fr) minmax(130px, .75fr) auto;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+
+.item-settings-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.item-category-block {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255,255,255,.78);
+}
+
+.item-category-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(216,189,122,.20), rgba(156,207,154,.10));
+  border-bottom: 1px solid var(--line);
+}
+
+.item-category-head strong {
+  color: var(--gold-2);
+  font-size: 18px;
+}
+
+.item-category-head small,
+.item-category-head span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.item-category-head small {
+  display: block;
+  margin-top: 3px;
+}
+
+.item-edit-table {
+  display: grid;
+  gap: 0;
+}
+
+.item-edit-head,
+.item-edit-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.35fr) minmax(130px, .85fr) minmax(125px, .75fr) minmax(125px, .75fr) minmax(110px, .65fr) minmax(120px, auto);
+  gap: 10px;
+  align-items: center;
+}
+
+.item-edit-head {
+  padding: 12px 14px;
+  color: var(--gold-2);
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(216,189,122,.10);
+}
+
+.item-edit-row {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.item-edit-row:hover {
+  background: rgba(255,255,255,.70);
+}
+
+.item-edit-row input,
+.item-edit-row select {
+  width: 100%;
+  min-width: 0;
+}
+
+.money-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(216,189,122,.35);
+  border-radius: 12px;
+  padding: 0 10px;
+  background: #fdf8eb;
+}
+
+.money-input span {
+  color: #6f6a5f;
+  font-weight: 700;
+}
+
+.money-input input {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding-left: 0;
+}
+
+.item-profit-pill {
+  border-radius: 999px;
+  padding: 9px 12px;
+  text-align: center;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.item-profit-pill.profit-good {
+  background: rgba(156,207,154,.20);
+  color: #52643a;
+  border: 1px solid rgba(156,207,154,.28);
+}
+
+.item-profit-pill.profit-bad {
+  background: rgba(255,143,143,.12);
+  color: #9f4040;
+  border: 1px solid rgba(255,143,143,.28);
+}
+
+.item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 1100px) {
+  .item-add-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .item-edit-head {
+    display: none;
+  }
+
+  .item-edit-row {
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--line);
+  }
+
+  .item-profit-pill,
+  .item-actions {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .item-add-form,
+  .item-edit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .item-profit-pill,
+  .item-actions {
+    grid-column: span 1;
+  }
+
+  .item-actions {
+    justify-content: flex-start;
+  }
+}
+
+
+/* 全亮色奶油白版加強 */
+body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
+.sidebar{background:linear-gradient(180deg,#fffdfa 0%,#f8efde 100%);}
+.table-wrap, .item-category-block, .backup-box, .summary-item, .setting-item, .column-setting-item, .item-edit-row {background: rgba(255,255,255,.82);}
+.item-edit-head{background: rgba(216,189,122,.14);}
+.group-row td{background: rgba(216,189,122,.14) !important;}
+.nav-btn{background: rgba(255,255,255,.86);}
+.soft-btn{background: rgba(255,255,255,.90);}
+.tiny-btn{background: rgba(143,160,109,.16); color: var(--green);}
+.records-table tbody tr:nth-child(even) td{background: rgba(255,255,255,.55);}
+.records-table tbody tr:hover td{background: rgba(143,160,109,.10);}
+.modal-card{background: #fffdf8;}
