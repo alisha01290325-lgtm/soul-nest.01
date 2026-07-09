@@ -763,6 +763,31 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
   border: 1px solid rgba(184, 91, 91, .18);
 }
 
+  
+/* 欄位刪除明顯版 */
+.column-delete-btn {
+  color: #9f4040 !important;
+  background: rgba(184, 91, 91, .12) !important;
+  border: 1px solid rgba(184, 91, 91, .28) !important;
+  font-weight: 800;
+}
+
+.column-buttons {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.version-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(143, 160, 109, .16);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+
   </style>
 </head>
 <body>
@@ -795,7 +820,7 @@ body{background:linear-gradient(180deg,#fffdf8 0%,#fbf6ea 55%,#f5ecdc 100%);}
       <header class="topbar">
         <div>
           <h2 id="pageTitle">儀表板</h2>
-          <p id="todayText"></p><p class="version-badge">收入支出分開版 v106</p>
+          <p id="todayText"></p><p class="version-badge">欄位刪除明顯版 v109</p>
         </div>
         <div class="top-actions">
           <select id="yearFilter" aria-label="選擇年份"></select>
@@ -1950,7 +1975,7 @@ function renderColumnSettings() {
       <div class="column-buttons">
         <button class="tiny-btn" onclick="moveColumn('${column.id}', -1)" ${index === 0 ? "disabled" : ""}>上移</button>
         <button class="tiny-btn" onclick="moveColumn('${column.id}', 1)" ${index === columns.length - 1 ? "disabled" : ""}>下移</button>
-        <button class="tiny-btn danger-mini" onclick="deleteColumn('${column.id}')">刪除</button>
+        <button class="tiny-btn danger-mini column-delete-btn" onclick="deleteColumn('${column.id}')">刪除欄位</button>
       </div>
     </div>
   `).join("");
