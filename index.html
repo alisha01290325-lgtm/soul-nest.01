@@ -59,19 +59,19 @@
 
         <div class="cards dashboard-cards">
           <div class="card"><span id="periodRevenueLabel">本期總金額</span><strong id="sumRevenue">$0</strong></div>
-          <div class="card"><span>本期成本 / 支出</span><strong id="sumCost">$0</strong></div>
-          <div class="card highlight"><span>本期淨利</span><strong id="sumProfit">$0</strong></div>
+          <div class="card"><span>本期給老師 / 成本</span><strong id="sumCost">$0</strong></div>
+          <div class="card highlight"><span>本期我們淨收</span><strong id="sumProfit">$0</strong></div>
           <div class="card"><span>本期已收款</span><strong id="sumPaid">$0</strong></div>
           <div class="card"><span>本期未收款</span><strong id="sumUnpaid">$0</strong></div>
           <div class="card"><span>本期筆數</span><strong id="sumCount">0</strong></div>
           <div class="card total-card"><span>全部總金額</span><strong id="allRevenue">$0</strong></div>
-          <div class="card total-card"><span>全部淨利</span><strong id="allProfit">$0</strong></div>
+          <div class="card total-card"><span>全部我們淨收</span><strong id="allProfit">$0</strong></div>
         </div>
 
         <div class="grid-two">
           <div class="panel">
             <div class="panel-head">
-              <h3>分類收入 / 淨利</h3>
+              <h3>分類收入 / 我們淨收</h3>
             </div>
             <div id="categorySummary" class="summary-list"></div>
           </div>
@@ -112,9 +112,16 @@
                 <option value="已收款">已收款</option>
                 <option value="未收款">未收款</option>
               </select>
+              <select id="groupModeFilter" aria-label="選擇明細排序方式">
+                <option value="category">依分類分組</option>
+                <option value="date">依日期排序</option>
+                <option value="customer">依客人 / 來源分組</option>
+                <option value="paymentStatus">依付款狀態分組</option>
+              </select>
               <button id="printBtn" class="soft-btn">列印</button>
             </div>
           </div>
+          <p class="muted group-hint">預設會把同一分類放在一起，並顯示小計，資料變多也比較不亂。</p>
           <div class="table-wrap">
             <table class="records-table">
               <thead id="recordTableHead"></thead>
@@ -132,7 +139,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>月份</th><th>收入</th><th>成本 / 支出</th><th>淨利</th><th>已收款</th><th>未收款</th><th>筆數</th>
+                  <th>月份</th><th>收入</th><th>給老師 / 成本</th><th>我們淨收</th><th>已收款</th><th>未收款</th><th>筆數</th>
                 </tr>
               </thead>
               <tbody id="monthlyRows"></tbody>
@@ -147,14 +154,15 @@
             <h3>品項設定</h3>
             <button id="resetDemoBtn" class="danger-soft-btn">重置成範例資料</button>
           </div>
-          <p class="muted">這裡可以設定常用服務的分類、單價與成本。新增記帳選到品項時會自動帶入。</p>
+          <p class="muted">這裡可以設定常用服務的分類、客人收費，以及要給老師多少。新增記帳選到品項時會自動帶入。</p>
           <form id="itemForm" class="inline-form">
             <input id="itemNameInput" placeholder="品項名稱，例如：塔羅牌一題" required />
             <select id="itemCategoryInput" required></select>
-            <input id="itemPriceInput" type="number" min="0" placeholder="單價" required />
-            <input id="itemCostInput" type="number" min="0" placeholder="成本" value="0" required />
+            <input id="itemPriceInput" type="number" min="0" placeholder="客人收費 / 件" required />
+            <input id="itemCostInput" type="number" min="0" placeholder="給老師 / 件" value="0" required />
             <button class="primary-btn" type="submit">新增品項</button>
           </form>
+          <p class="muted split-hint">例：感情儀式客人收 $3,000，給老師 $1,500，系統會自動算我們淨收 $1,500。數量大於 1 時，給老師金額會自動乘上數量。</p>
           <div id="itemList" class="settings-list"></div>
         </div>
 
@@ -166,10 +174,14 @@
             </div>
             <button id="resetColumnsBtn" class="soft-btn">恢復預設欄位</button>
           </div>
+          <form id="customColumnForm" class="inline-form custom-column-form">
+            <input id="customColumnNameInput" placeholder="新增自訂欄位，例如：老師名稱、老師分潤、IG帳號、平台來源" required />
+            <button class="primary-btn" type="submit">＋新增欄位</button>
+          </form>
           <div class="column-settings-head">
             <span>顯示</span>
             <span>欄位名稱</span>
-            <span>順序</span>
+            <span>順序 / 管理</span>
           </div>
           <div id="columnSettingsList" class="column-settings-list"></div>
         </div>
@@ -193,14 +205,15 @@
         <label>付款狀態<select id="paymentStatusInput"><option>已收款</option><option>未收款</option></select></label>
         <label>付款方式<select id="paymentMethodInput"><option>轉帳</option><option>LINE Pay</option><option>現金</option><option>尚未付款</option><option>其他</option></select></label>
         <label>付款日期<input id="paidDateInput" type="date" /></label>
-        <label>單價<input id="priceInput" type="number" min="0" step="1" required /></label>
+        <label>客人收費 / 件<input id="priceInput" type="number" min="0" step="1" required /></label>
         <label>數量<input id="qtyInput" type="number" min="1" step="1" value="1" required /></label>
-        <label>成本 / 支出<input id="costInput" type="number" min="0" step="1" value="0" /></label>
+        <label>給老師 / 成本總額<input id="costInput" type="number" min="0" step="1" value="0" /></label>
         <label class="wide">備註<textarea id="noteInput" rows="3" placeholder="例如：加急、老師分潤、客製儀式材料等"></textarea></label>
+        <div id="customFieldInputs" class="custom-fields wide"></div>
       </div>
       <div class="modal-total">
         <span>總金額：<strong id="previewAmount">$0</strong></span>
-        <span>預估淨利：<strong id="previewProfit">$0</strong></span>
+        <span>預估我們淨收：<strong id="previewProfit">$0</strong></span>
       </div>
       <div class="modal-actions">
         <button type="button" id="deleteRecordBtn" class="danger-btn hidden">刪除</button>

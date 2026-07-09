@@ -32,8 +32,8 @@ const defaultColumns = [
   { id: "price", label: "單價", visible: true },
   { id: "qty", label: "數量", visible: true },
   { id: "amount", label: "總金額", visible: true },
-  { id: "cost", label: "成本", visible: true },
-  { id: "profit", label: "淨利", visible: true },
+  { id: "cost", label: "給老師 / 成本", visible: true },
+  { id: "profit", label: "我們淨收", visible: true },
   { id: "note", label: "備註", visible: true }
 ];
 
@@ -119,16 +119,32 @@ function cloneDefaultColumns() {
 function normalizeColumns(input) {
   if (!Array.isArray(input)) return cloneDefaultColumns();
   const defaultMap = new Map(defaultColumns.map((column) => [column.id, column]));
-  const normalized = input
-    .filter((column) => defaultMap.has(column.id))
-    .map((column) => {
+  const normalized = [];
+
+  input.forEach((column) => {
+    if (!column || !column.id) return;
+
+    if (defaultMap.has(column.id)) {
       const base = defaultMap.get(column.id);
-      return {
+      normalized.push({
         id: base.id,
-        label: String(column.label || base.label),
+        label: normalizeColumnLabel(base.id, String(column.label || base.label)),
         visible: typeof column.visible === "boolean" ? column.visible : base.visible
-      };
-    });
+      });
+      return;
+    }
+
+    if (String(column.id).startsWith("custom_")) {
+      const label = String(column.label || "").trim();
+      if (!label) return;
+      normalized.push({
+        id: String(column.id),
+        label,
+        visible: typeof column.visible === "boolean" ? column.visible : true,
+        custom: true
+      });
+    }
+  });
 
   defaultColumns.forEach((base) => {
     if (!normalized.some((column) => column.id === base.id)) {
@@ -141,6 +157,16 @@ function normalizeColumns(input) {
     if (first) first.visible = true;
   }
   return normalized;
+}
+
+function customColumns() {
+  return columns.filter((column) => String(column.id).startsWith("custom_"));
+}
+
+function normalizeColumnLabel(id, label) {
+  if (id === "cost" && label === "成本") return "給老師 / 成本";
+  if (id === "profit" && label === "淨利") return "我們淨收";
+  return label;
 }
 
 function save() {
@@ -233,7 +259,8 @@ function filteredRecords() {
   const status = $("statusFilter")?.value || "all";
 
   return periodRecords.filter((record) => {
-    const text = `${record.item} ${record.customer} ${record.note} ${record.category} ${record.paymentMethod} ${record.paidDate}`.toLowerCase();
+    const customText = Object.values(record.customFields || {}).join(" ");
+    const text = `${record.item} ${record.customer} ${record.note} ${record.category} ${record.paymentMethod} ${record.paidDate} ${customText}`.toLowerCase();
     const matchKeyword = !keyword || text.includes(keyword);
     const matchCategory = category === "all" || record.category === category;
     const matchStatus = status === "all" || record.paymentStatus === status;
@@ -331,11 +358,11 @@ function renderCategorySummary(periodRecords) {
       <div class="summary-item">
         <div>
           <strong>${escapeHtml(row.category)}</strong>
-          <small>${row.count} 筆｜成本 ${money(row.cost)}</small>
+          <small>${row.count} 筆｜給老師/成本 ${money(row.cost)}</small>
         </div>
         <div class="summary-number">
           <strong>${money(row.revenue)}</strong>
-          <small class="${row.profit >= 0 ? "profit-pos" : "profit-neg"}">淨利 ${money(row.profit)}</small>
+          <small class="${row.profit >= 0 ? "profit-pos" : "profit-neg"}">我們淨收 ${money(row.profit)}</small>
         </div>
       </div>`).join("")
     : `<p class="muted">這個期間還沒有資料。</p>`;
@@ -358,7 +385,7 @@ function renderTrendSummary() {
         <div class="trend-bar-wrap"><div class="trend-bar" style="width:${width}%"></div></div>
         <div class="trend-money">
           <strong>${money(row.revenue)}</strong>
-          <small class="${row.profit >= 0 ? "profit-pos" : "profit-neg"}">淨利 ${money(row.profit)}</small>
+          <small class="${row.profit >= 0 ? "profit-pos" : "profit-neg"}">我們淨收 ${money(row.profit)}</small>
         </div>
       </div>`;
   }).join("");
@@ -396,6 +423,7 @@ function renderRecords() {
   const list = filteredRecords();
   const displayColumns = visibleColumns();
   const colspan = displayColumns.length + 1;
+  const groupMode = $("groupModeFilter")?.value || "category";
 
   $("recordTableHead").innerHTML = `
     <tr>
@@ -403,7 +431,38 @@ function renderRecords() {
       <th></th>
     </tr>`;
 
-  $("recordRows").innerHTML = list.length ? list.map((record) => `
+  if (!list.length) {
+    $("recordRows").innerHTML = `<tr><td colspan="${colspan}" class="muted">目前沒有符合條件的資料。</td></tr>`;
+    return;
+  }
+
+  if (groupMode === "date") {
+    $("recordRows").innerHTML = list.map((record) => recordRowHtml(record, displayColumns)).join("");
+    return;
+  }
+
+  const groups = groupedRecords(list, groupMode);
+  $("recordRows").innerHTML = groups.map((group) => `
+    <tr class="group-row">
+      <td colspan="${colspan}">
+        <div class="group-row-inner">
+          <strong>${escapeHtml(group.label)}</strong>
+          <span>
+            ${group.summary.count} 筆｜
+            總金額 ${money(group.summary.revenue)}｜
+            給老師/成本 ${money(group.summary.cost)}｜
+            <b class="${group.summary.profit >= 0 ? "profit-pos" : "profit-neg"}">我們淨收 ${money(group.summary.profit)}</b>｜
+            未收 ${money(group.summary.unpaid)}
+          </span>
+        </div>
+      </td>
+    </tr>
+    ${group.records.map((record) => recordRowHtml(record, displayColumns)).join("")}
+  `).join("");
+}
+
+function recordRowHtml(record, displayColumns) {
+  return `
     <tr>
       ${displayColumns.map((column) => {
         const cell = recordCell(record, column.id);
@@ -411,7 +470,42 @@ function renderRecords() {
       }).join("")}
       <td class="row-actions"><button class="tiny-btn" onclick="openRecordDialog('${record.id}')">編輯</button></td>
     </tr>
-  `).join("") : `<tr><td colspan="${colspan}" class="muted">目前沒有符合條件的資料。</td></tr>`;
+  `;
+}
+
+function groupedRecords(list, mode) {
+  const groupMap = new Map();
+  list.forEach((record) => {
+    const key = groupKey(record, mode);
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key).push(record);
+  });
+
+  const categoryOrder = new Map(categories.map((category, index) => [category, index]));
+  return [...groupMap.entries()]
+    .map(([label, groupRecords]) => ({
+      label,
+      records: groupRecords.sort((a, b) => (b.date || "").localeCompare(a.date || "")),
+      summary: summaryOf(groupRecords)
+    }))
+    .sort((a, b) => {
+      if (mode === "category") {
+        const ai = categoryOrder.has(a.label) ? categoryOrder.get(a.label) : 999;
+        const bi = categoryOrder.has(b.label) ? categoryOrder.get(b.label) : 999;
+        return ai - bi || a.label.localeCompare(b.label, "zh-Hant");
+      }
+      if (mode === "paymentStatus") {
+        const order = { "未收款": 0, "已收款": 1, "未分類": 2 };
+        return (order[a.label] ?? 9) - (order[b.label] ?? 9);
+      }
+      return a.label.localeCompare(b.label, "zh-Hant");
+    });
+}
+
+function groupKey(record, mode) {
+  if (mode === "customer") return record.customer || "未填客人 / 來源";
+  if (mode === "paymentStatus") return record.paymentStatus || "未分類";
+  return record.category || "未分類";
 }
 
 function recordCell(record, fieldId) {
@@ -443,6 +537,9 @@ function recordCell(record, fieldId) {
     case "note":
       return { html: escapeHtml(record.note || ""), className: "" };
     default:
+      if (String(fieldId).startsWith("custom_")) {
+        return { html: escapeHtml(record.customFields?.[fieldId] || ""), className: "" };
+      }
       return { html: "", className: "" };
   }
 }
@@ -462,7 +559,11 @@ function recordCellText(record, fieldId) {
     case "cost": return costOf(record);
     case "profit": return profitOf(record);
     case "note": return record.note || "";
-    default: return "";
+    default:
+      if (String(fieldId).startsWith("custom_")) {
+        return record.customFields?.[fieldId] || "";
+      }
+      return "";
   }
 }
 
@@ -487,14 +588,24 @@ function renderMonthly() {
 
 function renderSettings() {
   $("itemList").innerHTML = items.length ? items.map((item) => `
-    <div class="setting-item">
-      <div>
-        <strong>${escapeHtml(item.name)}</strong>
-        <small class="muted">${escapeHtml(item.category)}</small>
+    <div class="setting-item split-setting-item">
+      <input value="${escapeHtml(item.name)}" onchange="updateItemField('${item.id}', 'name', this.value)" aria-label="品項名稱" />
+      <select onchange="updateItemField('${item.id}', 'category', this.value)" aria-label="分類">
+        ${categories.map((category) => `<option value="${escapeHtml(category)}" ${item.category === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("")}
+      </select>
+      <label>
+        <span>客人收費 / 件</span>
+        <input type="number" min="0" step="1" value="${Number(item.price || 0)}" onchange="updateItemField('${item.id}', 'price', this.value)" />
+      </label>
+      <label>
+        <span>給老師 / 成本 / 件</span>
+        <input type="number" min="0" step="1" value="${Number(item.cost || 0)}" onchange="updateItemField('${item.id}', 'cost', this.value)" />
+      </label>
+      <div class="split-profit">
+        <small>我們抽 / 件</small>
+        <strong class="${Number(item.price || 0) - Number(item.cost || 0) >= 0 ? "profit-pos" : "profit-neg"}">${money(Number(item.price || 0) - Number(item.cost || 0))}</strong>
       </div>
-      <span>${money(item.price)}</span>
-      <span>成本 ${money(item.cost)}</span>
-      <button class="tiny-btn" onclick="deleteItem('${item.id}')">刪除</button>
+      <button class="tiny-btn danger-mini" onclick="deleteItem('${item.id}')">刪除</button>
     </div>
   `).join("") : `<p class="muted">尚未設定品項。</p>`;
   renderColumnSettings();
@@ -513,6 +624,7 @@ function renderColumnSettings() {
       <div class="column-buttons">
         <button class="tiny-btn" onclick="moveColumn('${column.id}', -1)" ${index === 0 ? "disabled" : ""}>上移</button>
         <button class="tiny-btn" onclick="moveColumn('${column.id}', 1)" ${index === columns.length - 1 ? "disabled" : ""}>下移</button>
+        ${column.custom ? `<button class="tiny-btn danger-mini" onclick="deleteCustomColumn('${column.id}')">刪除</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -555,9 +667,39 @@ function openRecordDialog(id = "") {
   $("qtyInput").value = record?.qty ?? 1;
   $("costInput").value = record?.cost ?? 0;
   $("noteInput").value = record?.note || "";
+  renderCustomFieldInputs(record);
   $("deleteRecordBtn").classList.toggle("hidden", !record);
   updatePreview();
   $("recordDialog").showModal();
+}
+
+function renderCustomFieldInputs(record = null) {
+  const box = $("customFieldInputs");
+  if (!box) return;
+  const custom = customColumns();
+  if (!custom.length) {
+    box.innerHTML = "";
+    return;
+  }
+
+  const values = record?.customFields || {};
+  box.innerHTML = `
+    <div class="custom-fields-title">自訂欄位</div>
+    ${custom.map((column) => `
+      <label>
+        ${escapeHtml(column.label)}
+        <input class="custom-field-input" data-column-id="${column.id}" value="${escapeHtml(values[column.id] || "")}" placeholder="輸入${escapeHtml(column.label)}" />
+      </label>
+    `).join("")}
+  `;
+}
+
+function collectCustomFields() {
+  const result = {};
+  document.querySelectorAll(".custom-field-input").forEach((input) => {
+    result[input.dataset.columnId] = input.value.trim();
+  });
+  return result;
 }
 
 function closeRecordDialog() {
@@ -578,11 +720,38 @@ function updatePreview() {
 function syncItemPreset() {
   const name = $("itemInput").value.trim();
   const item = items.find((entry) => entry.name === name);
-  if (!item) return;
-  $("categoryInput").value = item.category;
-  $("priceInput").value = item.price;
-  $("costInput").value = item.cost;
+  if (item) {
+    $("categoryInput").value = item.category;
+    $("priceInput").value = item.price;
+    autoFillCostFromSelectedItem();
+  } else {
+    const guessedCategory = guessCategoryFromItem(name);
+    if (guessedCategory) $("categoryInput").value = guessedCategory;
+  }
   updatePreview();
+}
+
+function autoFillCostFromSelectedItem() {
+  const name = $("itemInput").value.trim();
+  const item = items.find((entry) => entry.name === name);
+  if (!item) return;
+  const qty = Number($("qtyInput").value || 1);
+  $("costInput").value = Number(item.cost || 0) * qty;
+}
+
+function guessCategoryFromItem(text) {
+  const value = String(text || "").toLowerCase();
+  if (!value) return "";
+  const rules = [
+    { category: "成本支出", words: ["成本", "支出", "材料", "進貨", "運費", "手續費", "廣告費", "平台費"] },
+    { category: "儀式", words: ["儀式", "招財", "感情", "復合", "和合", "蠟燭", "願望", "祈福", "淨化"] },
+    { category: "塔羅", words: ["塔羅", "牌", "單題", "四題", "加急", "桃花", "大眾占卜", "生命靈數", "流年"] },
+    { category: "讀心 / 通靈", words: ["讀心", "通靈", "算命", "加百列", "席琳", "靈視", "訊息"] },
+    { category: "聖物 / 飾品", words: ["水晶", "聖物", "飾品", "耳環", "手鍊", "項鍊", "吊飾"] },
+    { category: "代理商", words: ["代理", "合作", "分潤", "林昱"] }
+  ];
+  const found = rules.find((rule) => rule.words.some((word) => value.includes(word.toLowerCase())));
+  return found?.category || "";
 }
 
 function submitRecord(event) {
@@ -600,7 +769,8 @@ function submitRecord(event) {
     price: Number($("priceInput").value || 0),
     qty: Number($("qtyInput").value || 1),
     cost: Number($("costInput").value || 0),
-    note: $("noteInput").value.trim()
+    note: $("noteInput").value.trim(),
+    customFields: collectCustomFields()
   };
 
   const exists = records.some((record) => record.id === id);
@@ -617,6 +787,19 @@ function deleteCurrentRecord() {
   records = records.filter((record) => record.id !== id);
   closeRecordDialog();
   render();
+}
+
+function updateItemField(id, field, value) {
+  items = items.map((item) => {
+    if (item.id !== id) return item;
+    if (field === "price" || field === "cost") {
+      return { ...item, [field]: Number(value || 0) };
+    }
+    return { ...item, [field]: String(value || "").trim() };
+  });
+  save();
+  renderDatalist();
+  renderSettings();
 }
 
 function deleteItem(id) {
@@ -638,6 +821,40 @@ function addItem(event) {
   items = [item, ...items];
   $("itemForm").reset();
   $("itemCostInput").value = 0;
+  render();
+}
+
+function addCustomColumn(event) {
+  event.preventDefault();
+  const input = $("customColumnNameInput");
+  const label = input.value.trim();
+  if (!label) return;
+
+  const exists = columns.some((column) => column.label.trim() === label);
+  if (exists && !confirm("已經有同名欄位，仍然要新增嗎？")) return;
+
+  columns.push({
+    id: `custom_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    label,
+    visible: true,
+    custom: true
+  });
+
+  input.value = "";
+  render();
+}
+
+function deleteCustomColumn(id) {
+  const column = columns.find((item) => item.id === id);
+  if (!column || !column.custom) return;
+  if (!confirm(`確定要刪除「${column.label}」欄位嗎？這個欄位已填寫的內容也會一起移除。`)) return;
+
+  columns = columns.filter((item) => item.id !== id);
+  records = records.map((record) => {
+    const customFields = { ...(record.customFields || {}) };
+    delete customFields[id];
+    return { ...record, customFields };
+  });
   render();
 }
 
@@ -692,7 +909,7 @@ function csvCell(value) {
 function backupJson() {
   const data = {
     app: "Soul Nest 記帳系統",
-    version: 3,
+    version: 5,
     exportedAt: new Date().toISOString(),
     records,
     items,
@@ -759,6 +976,7 @@ function init() {
   $("recordForm").addEventListener("submit", submitRecord);
   $("deleteRecordBtn").addEventListener("click", deleteCurrentRecord);
   $("itemForm").addEventListener("submit", addItem);
+  $("customColumnForm").addEventListener("submit", addCustomColumn);
   $("exportCsvBtn").addEventListener("click", exportCsv);
   $("backupJsonBtn").addEventListener("click", backupJson);
   $("importJsonInput").addEventListener("change", importJson);
@@ -770,7 +988,13 @@ function init() {
   $("searchInput").addEventListener("input", renderRecords);
   $("categoryFilter").addEventListener("change", renderRecords);
   $("statusFilter").addEventListener("change", renderRecords);
-  ["priceInput", "qtyInput", "costInput", "categoryInput"].forEach((id) => $(id).addEventListener("input", updatePreview));
+  $("groupModeFilter").addEventListener("change", renderRecords);
+  ["priceInput", "costInput", "categoryInput"].forEach((id) => $(id).addEventListener("input", updatePreview));
+  $("qtyInput").addEventListener("input", () => {
+    autoFillCostFromSelectedItem();
+    updatePreview();
+  });
+  $("itemInput").addEventListener("input", syncItemPreset);
   $("itemInput").addEventListener("change", syncItemPreset);
   $("paymentStatusInput").addEventListener("change", () => {
     if ($("paymentStatusInput").value === "未收款") {
